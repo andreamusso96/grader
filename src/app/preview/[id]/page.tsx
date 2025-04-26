@@ -102,17 +102,19 @@ export default function PreviewPage() {
             </p>
 
             {/* MCQ */}
-            {q.qType === 'mcq'
-              ? [...Array(q.length)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 leading-tight">
-                    <div className="h-5 w-5 flex-shrink-0 border-2 border-black" />
-                    <span className="text-base">Option {i + 1}</span>
-                  </div>
-                ))
-              /* Open question */
-              : [...Array(q.length)].map((_, i) => (
-                  <div key={i} className="my-2 h-5 w-full border-b border-black" />
-                ))}
+{/* MCQ or Open */}
+{q.qType === 'mcq'
+  ? q.options.map((opt, i) => (
+      <div key={i} className="flex items-center gap-3 leading-tight">
+        <div className="h-5 w-5 flex-shrink-0 border-2 border-black" />
+        <span className="text-base">{opt || `Option ${i + 1}`}</span>
+      </div>
+    ))
+  : [...Array(q.length)].map((_, i) => (
+      <div key={i} className="my-2 h-5 w-full border-b border-black" />
+    ))}
+
+
           </div>
         ))}
       </div>
