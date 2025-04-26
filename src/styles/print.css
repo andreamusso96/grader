@@ -1,0 +1,19 @@
+@media print {
+    body {
+      margin: 0;
+      background: white;
+    }
+    .sheet {
+      width: 18.5cm;
+      margin: 1cm auto;
+      color: #000;
+      font-size: 12pt;
+      line-height: 1.4;
+    }
+    h2 {
+      margin-bottom: 1em;
+      text-align: center;
+      font-size: 18pt;
+    }
+  }
+  
