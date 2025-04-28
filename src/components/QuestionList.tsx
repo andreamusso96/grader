@@ -1,7 +1,7 @@
 'use client';
 
 import { useExamStore } from '@/store/useExamStore';
-import { MCQ, Open, Question } from '@/types/exam'; // Assuming your types are in this file
+import { MCQ, Open, Question } from '@/types'; // Assuming your types are in this file
 
 export default function QuestionList({
   examId,
