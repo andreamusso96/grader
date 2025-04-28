@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useExamStore } from '@/store/useExamStore';
-import { Question } from '@/types';
+import { MCQ, Question } from '@/types';
+
+type QuestionFormState = Omit<Question, 'id'> & {
+  options?: string[];
+};
 
 export default function QuestionForm({
   examId,
@@ -13,20 +17,25 @@ export default function QuestionForm({
 }) {
   const addQuestion = useExamStore((s) => s.addQuestion);
 
-  const [data, setData] = useState<Omit<Question, 'id'>>({
+  const [data, setData] = useState<QuestionFormState>({
     text: '',
     qType: 'mcq',
-    length: 4,          // initial option count OR lines
+    length: 4, // initial option count OR lines
     options: ['', '', '', ''], // 4 blank options
-  } as any);
+  });
 
   /* keep options array in-sync with length when qType is mcq */
   useEffect(() => {
     if (data.qType !== 'mcq') return;
+
     setData((d) => {
-      const diff = d.length - d.options.length;
-      if (diff > 0) return { ...d, options: [...d.options, ...Array(diff).fill('')] };
-      if (diff < 0) return { ...d, options: d.options.slice(0, d.length) };
+      const diff = d.length - (d.options?.length || 0);
+      if (diff > 0) {
+        return { ...d, options: [...(d.options || []), ...Array(diff).fill('')] };
+      }
+      if (diff < 0 && d.options) {
+        return { ...d, options: d.options.slice(0, d.length) };
+      }
       return d;
     });
   }, [data.length, data.qType]);
@@ -34,12 +43,16 @@ export default function QuestionForm({
   const submit = () => {
     if (!data.text.trim()) return;
 
-    const payload =
-      data.qType === 'mcq'
-        ? { ...data, length: data.options.length } // overwrite length
-        : { ...data, options: undefined };        // remove unused field
+    let payload: Omit<Question, 'id'> & { options?: string[] };
 
-    addQuestion(examId, payload as any);
+    if (data.qType === 'mcq') {
+      const { options, ...rest } = data;
+      payload = { ...rest, length: options?.length || 0, options };
+    } else {
+      const { options, ...rest } = data;
+      payload = rest;
+    }
+    addQuestion(examId, payload as Question);
     onClose();
   };
 
@@ -62,7 +75,8 @@ export default function QuestionForm({
             ...data,
             qType: e.target.value as 'mcq' | 'open',
             // reset when switching types
-            options: e.target.value === 'mcq' ? Array(data.length).fill('') : [],
+            options: e.target.value === 'mcq' ? Array(data.length).fill('') : undefined,
+            length: e.target.value === 'mcq' ? data.length : 1, // Reset length for open questions
           })
         }
       >
@@ -79,19 +93,20 @@ export default function QuestionForm({
         onChange={(e) =>
           setData({ ...data, length: Number(e.target.value) })
         }
+        disabled={data.qType === 'open'}
       />
 
       {/* option inputs – only for MCQ */}
       {data.qType === 'mcq' && (
         <div className="space-y-2">
-          {data.options.map((opt, i) => (
+          {data.options?.map((opt, i) => (
             <input
               key={i}
               className="w-full border p-2"
               placeholder={`Option ${i + 1}`}
               value={opt}
               onChange={(e) => {
-                const opts = [...data.options];
+                const opts = [...(data.options || [])];
                 opts[i] = e.target.value;
                 setData({ ...data, options: opts });
               }}
@@ -101,7 +116,7 @@ export default function QuestionForm({
             type="button"
             className="rounded border px-2 py-1 text-sm"
             onClick={() =>
-              setData({ ...data, options: [...data.options, ''], length: data.length + 1 })
+              setData({ ...data, options: [...(data.options || []), ''], length: data.length + 1 })
             }
           >
             + Add option
