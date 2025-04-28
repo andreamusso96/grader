@@ -1,7 +1,7 @@
 // src/store/useExamStore.ts
 import { create } from "zustand";
 import { nanoid } from "nanoid";
-import { Exam, Question } from "@/types";        // or "../types"
+import { Exam, Question, Open, MCQ} from "@/types";        // or "../types"
 
 interface Store {
   exams: Record<string, Exam>;
@@ -24,8 +24,17 @@ export const useExamStore = create<Store>()((set) => ({
   addQuestion: (examId, q) =>
     set((st) => {
       const exam = st.exams[examId];
-      if (!exam) return st;                              // guard
-      const newQ: Question = { ...q, id: nanoid() };     // typed
+      if (!exam) return st;
+      
+      let newQ: Question;
+      if (q.qType === "open") {
+        newQ = { ...q, id: nanoid() } as Open;  // TypeScript now knows it's an Open
+      } else if (q.qType === "mcq") {
+        newQ = { ...q, id: nanoid() } as MCQ;   // TypeScript now knows it's an MCQ
+      } else {
+        throw new Error("Unknown question type");
+      }
+  
       return {
         exams: {
           ...st.exams,
@@ -33,6 +42,7 @@ export const useExamStore = create<Store>()((set) => ({
         },
       };
     }),
+  
 
   removeQuestion: (examId, qId) =>
     set((st) => {
