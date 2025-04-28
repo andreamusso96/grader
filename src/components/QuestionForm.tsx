@@ -11,18 +11,27 @@ type QuestionFormState = Omit<Question, 'id'> & {
 export default function QuestionForm({
   examId,
   onClose,
+  initialQuestion,
+  isEditing = false,
 }: {
   examId: string;
   onClose: () => void;
+  initialQuestion?: Question;
+  isEditing?: boolean;
 }) {
   const addQuestion = useExamStore((s) => s.addQuestion);
+  const updateQuestion = useExamStore((s) => s.updateQuestion);
 
-  const [data, setData] = useState<QuestionFormState>({
-    text: '',
-    qType: 'mcq',
-    length: 4, // initial option count OR lines
-    options: ['', '', '', ''], // 4 blank options
-  });
+  const [data, setData] = useState<QuestionFormState>(
+    initialQuestion
+      ? { ...initialQuestion, options: (initialQuestion as MCQ).options }
+      : {
+          text: '',
+          qType: 'mcq',
+          length: 4, // initial option count OR lines
+          options: ['', '', '', ''], // 4 blank options
+        }
+  );
 
   /* keep options array in-sync with length when qType is mcq */
   useEffect(() => {
@@ -40,6 +49,24 @@ export default function QuestionForm({
     });
   }, [data.length, data.qType]);
 
+  useEffect(() => {
+    if (initialQuestion) {
+      setData({
+        text: initialQuestion.text,
+        qType: initialQuestion.qType,
+        length: initialQuestion.length,
+        options: (initialQuestion as MCQ).options,
+      });
+    } else {
+      setData({
+        text: '',
+        qType: 'mcq',
+        length: 4,
+        options: ['', '', '', ''],
+      });
+    }
+  }, [initialQuestion]);
+
   const submit = () => {
     if (!data.text.trim()) return;
 
@@ -52,7 +79,12 @@ export default function QuestionForm({
       const { options, ...rest } = data;
       payload = rest;
     }
-    addQuestion(examId, payload as Question);
+
+    if (isEditing && initialQuestion?.id) {
+      updateQuestion(examId, initialQuestion.id, payload as Question);
+    } else {
+      addQuestion(examId, payload as Question);
+    }
     onClose();
   };
 
@@ -127,7 +159,7 @@ export default function QuestionForm({
       {/* actions */}
       <div className="flex gap-2">
         <button onClick={submit} className="rounded bg-black px-3 py-2 text-white">
-          Add
+          {isEditing ? 'Save' : 'Add'}
         </button>
         <button onClick={onClose} className="rounded border px-3 py-2">
           Cancel

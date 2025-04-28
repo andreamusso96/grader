@@ -1,61 +1,70 @@
-// src/store/useExamStore.ts
-import { create } from "zustand";
-import { nanoid } from "nanoid";
-import { Exam, Question, Open, MCQ} from "@/types";        // or "../types"
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { Exam, Question } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
-interface Store {
+interface ExamState {
   exams: Record<string, Exam>;
-  createExam: (title: string) => string;
-  addQuestion: (examId: string, q: Omit<Question, "id">) => void;
-  removeQuestion: (examId: string, qId: string) => void;
+  addExam: (title: string) => string;
+  addQuestion: (examId: string, question: Omit<Question, 'id'>) => void;
+  removeQuestion: (examId: string, questionId: string) => void;
+  updateQuestion: (examId: string, questionId: string, updatedQuestion: Omit<Question, 'id'> & { options?: string[] }) => void; // Add this
 }
 
-export const useExamStore = create<Store>()((set) => ({
-  exams: {},
-
-  createExam: (title) => {
-    const id = nanoid();
-    set((st) => ({
-      exams: { ...st.exams, [id]: { id, title, questions: [] } },
-    }));
-    return id;
-  },
-
-  addQuestion: (examId, q) =>
-    set((st) => {
-      const exam = st.exams[examId];
-      if (!exam) return st;
-      
-      let newQ: Question;
-      if (q.qType === "open") {
-        newQ = { ...q, id: nanoid() } as Open;  // TypeScript now knows it's an Open
-      } else if (q.qType === "mcq") {
-        newQ = { ...q, id: nanoid() } as MCQ;   // TypeScript now knows it's an MCQ
-      } else {
-        throw new Error("Unknown question type");
-      }
-  
-      return {
-        exams: {
-          ...st.exams,
-          [examId]: { ...exam, questions: [...exam.questions, newQ] },
-        },
-      };
-    }),
-  
-
-  removeQuestion: (examId, qId) =>
-    set((st) => {
-      const exam = st.exams[examId];
-      if (!exam) return st;
-      return {
-        exams: {
-          ...st.exams,
-          [examId]: {
-            ...exam,
-            questions: exam.questions.filter((q) => q.id !== qId),
+export const useExamStore = create<ExamState>()(
+  persist(
+    (set, get) => ({
+      exams: {},
+      addExam: (title) => {
+        const id = uuidv4();
+        set((state) => ({
+          exams: { ...state.exams, [id]: { id, title, questions: [] } },
+        }));
+        return id;
+      },
+      addQuestion: (examId, question) => {
+        const newQuestion: Question = { id: uuidv4(), ...question };
+        set((state) => ({
+          exams: {
+            ...state.exams,
+            [examId]: {
+              ...state.exams[examId],
+              questions: [...state.exams[examId].questions, newQuestion],
+            },
           },
-        },
-      };
+        }));
+      },
+      removeQuestion: (examId, questionId) => {
+        set((state) => ({
+          exams: {
+            ...state.exams,
+            [examId]: {
+              ...state.exams[examId],
+              questions: state.exams[examId].questions.filter((q) => q.id !== questionId),
+            },
+          },
+        }));
+      },
+      updateQuestion: (examId, questionId, updatedQuestion) => {
+        set((state) => {
+          const exam = state.exams[examId];
+          if (exam) {
+            const updatedQuestions = exam.questions.map((q) =>
+              q.id === questionId ? { id: questionId, ...updatedQuestion } : q
+            );
+            return {
+              exams: {
+                ...state.exams,
+                [examId]: { ...exam, questions: updatedQuestions },
+              },
+            };
+          }
+          return state;
+        });
+      },
     }),
-}));
+    {
+      name: 'exam-storage',
+    }
+  )
+);

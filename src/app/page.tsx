@@ -7,7 +7,7 @@ import { useExamStore } from '@/store/useExamStore';
 
 export default function Home() {
   const [title, setTitle] = useState('');
-  const createExam = useExamStore((s) => s.createExam);
+  const createExam = useExamStore((s) => s.addExam);
   const router = useRouter();
 
   const handleCreate = () => {
