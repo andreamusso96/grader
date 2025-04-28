@@ -32,10 +32,8 @@ export default function QuestionList({
         {questions.map((q, i) => (
           <li key={q.id} className="rounded border p-4">
             <div className="flex justify-between items-start mb-2">
-              <span className="font-semibold flex-grow">
+              <span className="font-semibold flex-grow flex items-center space-x-2">
                 {i + 1}. {q.text}
-              </span>
-              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => handleEdit(q)}
                   className="text-blue-600 hover:text-blue-800 focus:outline-none"
@@ -43,6 +41,8 @@ export default function QuestionList({
                 >
                   ✏️
                 </button>
+              </span>
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => remove(examId, q.id)}
                   className="text-red-600 hover:text-red-800 focus:outline-none"
@@ -71,18 +71,18 @@ export default function QuestionList({
       </ul>
 
       {editingQuestion && (
-      <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center dark:bg-gray-800 dark:bg-opacity-75">
-        <div className="bg-white p-6 rounded-md shadow-md w-full max-w-md dark:bg-gray-900 dark:text-white">
-          <h2 className="text-lg font-semibold mb-4 dark:text-gray-300">Edit Question</h2>
-          <QuestionForm
-            examId={examId}
-            onClose={handleCloseEditForm}
-            initialQuestion={editingQuestion}
-            isEditing={true}
-          />
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center dark:bg-gray-800 dark:bg-opacity-75">
+          <div className="bg-white p-6 rounded-md shadow-md w-full max-w-md dark:bg-gray-900 dark:text-white">
+            <h2 className="text-lg font-semibold mb-4 dark:text-gray-300">Edit Question</h2>
+            <QuestionForm
+              examId={examId}
+              onClose={handleCloseEditForm}
+              initialQuestion={editingQuestion}
+              isEditing={true}
+            />
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }
